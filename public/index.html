@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="WeatherMind — An AI-powered agentic weather app with smart insights, forecasts, and a conversational weather assistant.">
+  <title>WeatherMind — Agentic Weather Intelligence</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css?v=1.1">
+
+  <!-- Favicon (emoji-based) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌤️</text></svg>">
+</head>
+<body>
+
+  <!-- Animated Background -->
+  <div class="app-bg" id="appBg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Alerts Container -->
+  <div class="alerts-container" id="alertsContainer"></div>
+
+  <!-- App Container -->
+  <div class="app-container">
+
+    <!-- ===== Sidebar Navigation ===== -->
+    <nav class="sidebar" role="navigation" aria-label="Main navigation">
+      <div class="sidebar-logo" title="WeatherMind">🌤️</div>
+
+      <div class="sidebar-nav">
+        <button class="nav-btn active" data-view="dashboard" id="nav-dashboard" aria-label="Dashboard">
+          🏠
+          <span class="tooltip">Dashboard</span>
+        </button>
+        <button class="nav-btn" data-view="agent" id="nav-agent" aria-label="AI Agent Chat">
+          🤖
+          <span class="tooltip">AI Agent</span>
+        </button>
+        <button class="nav-btn" data-view="cities" id="nav-cities" aria-label="Saved Cities">
+          🌍
+          <span class="tooltip">My Cities</span>
+        </button>
+        <button class="nav-btn" data-view="help" id="nav-help" aria-label="Help Guide & API Setup">
+          📖
+          <span class="tooltip">Help Guide</span>
+        </button>
+      </div>
+
+      <div class="sidebar-bottom">
+        <button class="nav-btn settings-btn" id="settingsBtn" aria-label="Settings" title="Settings">
+          ⚙️
+          <span class="tooltip">Settings</span>
+        </button>
+        <button class="unit-toggle" id="unitToggle" title="Toggle temperature unit">°C</button>
+      </div>
+    </nav>
+
+    <!-- ===== Main Content ===== -->
+    <main class="main-content">
+
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <h1>WeatherMind</h1>
+          <p>Your AI-Powered Weather Agent</p>
+        </div>
+        <div class="search-container">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-box" id="searchBox" placeholder="Search any city..." autocomplete="off" aria-label="Search city">
+          <button class="geo-btn" id="geoBtn" title="Use my location" aria-label="Use my location">📍</button>
+          <div class="search-suggestions" id="searchSuggestions"></div>
+        </div>
+      </header>
+
+      <!-- ========== DASHBOARD VIEW ========== -->
+      <section class="view-section active" id="view-dashboard">
+
+        <!-- Current Weather + Agent Insight -->
+        <div class="current-weather">
+          <div class="glass-card weather-hero" id="weatherHero">
+            <div class="loading-spinner"></div>
+          </div>
+          <div class="glass-card agent-insight" id="agentInsight">
+            <div class="agent-badge">
+              <span class="pulse-dot"></span>
+              WeatherMind Agent
+            </div>
+            <div class="agent-insight-title">Initializing...</div>
+            <div class="agent-insight-text">Loading weather intelligence...</div>
+          </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="metrics-grid" id="metricsGrid">
+          <!-- Filled by JS -->
+        </div>
+
+        <!-- Hourly Forecast -->
+        <div class="glass-card hourly-forecast">
+          <div class="glass-card-header">
+            <span class="glass-card-title">⏰ Hourly Forecast</span>
+          </div>
+          <div class="hourly-scroll" id="hourlyScroll">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+
+        <!-- 7-Day Forecast -->
+        <div class="glass-card daily-forecast" style="margin-top: var(--space-xl)">
+          <div class="glass-card-header">
+            <span class="glass-card-title">📅 7-Day Forecast</span>
+          </div>
+          <div class="daily-list" id="dailyList">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid" style="margin-top: var(--space-xl)">
+          <div class="glass-card chart-container">
+            <div class="glass-card-header">
+              <span class="glass-card-title">🌡️ Temperature (24h)</span>
+            </div>
+            <canvas id="chartHourlyTemp"></canvas>
+          </div>
+          <div class="glass-card chart-container">
+            <div class="glass-card-header">
+              <span class="glass-card-title">🌧️ Precipitation Probability</span>
+            </div>
+            <canvas id="chartPrecip"></canvas>
+          </div>
+          <div class="glass-card chart-container">
+            <div class="glass-card-header">
+              <span class="glass-card-title">📊 7-Day Temperature Range</span>
+            </div>
+            <canvas id="chartDailyTemp"></canvas>
+          </div>
+          <div class="glass-card chart-container">
+            <div class="glass-card-header">
+              <span class="glass-card-title">💨 Wind Speed (24h)</span>
+            </div>
+            <canvas id="chartWind"></canvas>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ========== AI AGENT CHAT VIEW ========== -->
+      <section class="view-section" id="view-agent">
+        <div class="chat-view">
+
+          <div class="chat-header">
+            <h2>Meet <span>WeatherMind</span></h2>
+            <p>Your intelligent weather assistant. Ask anything about the weather!</p>
+            <div class="llm-badge" id="llmBadge">
+              <span class="llm-dot"></span>
+              <span class="llm-label">Rule-based Mode</span>
+            </div>
+          </div>
+
+          <!-- Quick Prompts -->
+          <div class="quick-prompts" id="quickPrompts">
+            <button class="quick-prompt" data-query="Should I carry an umbrella today?">
+              <span class="prompt-icon">☂️</span>
+              Should I carry an umbrella?
+              <span class="prompt-text">Check rain probability</span>
+            </button>
+            <button class="quick-prompt" data-query="What should I wear today?">
+              <span class="prompt-icon">👕</span>
+              What should I wear?
+              <span class="prompt-text">Get outfit recommendations</span>
+            </button>
+            <button class="quick-prompt" data-query="Is it a good day for outdoor activities?">
+              <span class="prompt-icon">🏃</span>
+              Good day to go outside?
+              <span class="prompt-text">Outdoor activity check</span>
+            </button>
+            <button class="quick-prompt" data-query="What's the best day this week for a picnic?">
+              <span class="prompt-icon">📅</span>
+              Best day this week?
+              <span class="prompt-text">Find the perfect day</span>
+            </button>
+            <button class="quick-prompt" data-query="Show me the weekly forecast">
+              <span class="prompt-icon">📊</span>
+              Weekly forecast
+              <span class="prompt-text">7-day weather outlook</span>
+            </button>
+            <button class="quick-prompt" data-query="What's the UV index? Do I need sunscreen?">
+              <span class="prompt-icon">☀️</span>
+              UV & Sun Protection
+              <span class="prompt-text">Sunscreen advice</span>
+            </button>
+          </div>
+
+          <!-- Chat Messages -->
+          <div class="chat-messages" id="chatMessages"></div>
+
+          <!-- Chat Input -->
+          <div class="chat-input-container">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Ask WeatherMind anything about the weather..." aria-label="Chat with weather agent">
+            <button class="chat-send-btn" id="chatSendBtn" title="Send message" aria-label="Send message">➤</button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ========== MULTI-CITY VIEW ========== -->
+      <section class="view-section" id="view-cities">
+        <div class="cities-header">
+          <h2>🌍 My Cities</h2>
+        </div>
+        <div class="cities-grid" id="citiesGrid">
+          <div class="glass-card add-city-card" onclick="App.onAddCityClick()">
+            <div class="add-city-icon">+</div>
+            <div class="add-city-text">Add a city</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== HELP CENTER & API GUIDE ========== -->
+      <section class="view-section" id="view-help">
+        <div class="help-header">
+          <h2>📖 Help Center & API Setup</h2>
+          <p>Learn how WeatherMind uses API keys directly in your browser and how to get them for free.</p>
+        </div>
+
+        <div class="help-grid">
+          <!-- Main Instructions Column (Left) -->
+          <div class="help-main-col">
+            <!-- Help Segmented Tabs -->
+            <div class="help-tabs" role="tablist">
+              <button class="help-tab active" data-help-tab="gemini" role="tab" aria-selected="true">✨ Gemini AI</button>
+              <button class="help-tab" data-help-tab="groq" role="tab" aria-selected="false">🦙 Groq Models</button>
+              <button class="help-tab" data-help-tab="privacy" role="tab" aria-selected="false">🔒 Privacy & Security</button>
+            </div>
+
+            <!-- Gemini Guide Panel -->
+            <div class="help-panel active" id="helpPanelGemini">
+              <div class="glass-card">
+                <h3>Google Gemini 2.0 Flash Setup</h3>
+                <p>Gemini is Google's flagship multimodal model. The free tier offers 1,500 requests per day.</p>
+                
+                <ol class="step-list">
+                  <li>
+                    <span class="step-num">1</span>
+                    <div>
+                      <strong>Visit Google AI Studio:</strong>
+                      <p>Go to <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio 🔗</a> and sign in with any Google account.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="step-num">2</span>
+                    <div>
+                      <strong>Create API Key:</strong>
+                      <p>Click the blue <strong>"Get API key"</strong> button, then click <strong>"Create API key"</strong>. You can choose to bind it to an existing Google Cloud project or auto-generate one.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="step-num">3</span>
+                    <div>
+                      <strong>Copy the Key:</strong>
+                      <p>Copy the generated key. It will start with <span class="key-badge">AIzaSy...</span>.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="step-num">4</span>
+                    <div>
+                      <strong>Save in App:</strong>
+                      <p>Open the app's <strong>Settings</strong>, select the <strong>Gemini</strong> tab, paste the key, and click <strong>Save & Test</strong>.</p>
+                    </div>
+                  </li>
+                </ol>
+
+                <div class="help-note warning">
+                  <strong>⚠️ Region Restrictions:</strong> Google AI Studio free tier has geographic availability restrictions. If you reside in the EU, UK, or other restricted areas, the API call might fail. If so, we recommend using Groq instead!
+                </div>
+              </div>
+            </div>
+
+            <!-- Groq Guide Panel -->
+            <div class="help-panel" id="helpPanelGroq">
+              <div class="glass-card">
+                <h3>Groq Open-Source Models Setup</h3>
+                <p>Groq provides ultra-fast hosting for leading open-source models, including Llama (Meta) and Gemma (Google). Free tier offers 14,400 requests per day.</p>
+                
+                <ol class="step-list">
+                  <li>
+                    <span class="step-num">1</span>
+                    <div>
+                      <strong>Visit Groq Console:</strong>
+                      <p>Go to <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq Console 🔗</a> and register for a free account (no credit card required).</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="step-num">2</span>
+                    <div>
+                      <strong>Create API Key:</strong>
+                      <p>Navigate to <strong>API Keys</strong> in the sidebar, click <strong>"Create API Key"</strong>, name it (e.g., "WeatherMind"), and click create.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="step-num">3</span>
+                    <div>
+                      <strong>Copy the Key:</strong>
+                      <p>Copy the key immediately as it will only be shown once. It will start with <span class="key-badge">gsk_...</span>.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="step-num">4</span>
+                    <div>
+                      <strong>Save in App:</strong>
+                      <p>Open the app's <strong>Settings</strong>, select the <strong>Groq</strong> tab, choose a model (Llama 3.3 is recommended), paste the key, and click <strong>Save & Test</strong>.</p>
+                    </div>
+                  </li>
+                </ol>
+              </div>
+            </div>
+
+            <!-- Privacy Panel -->
+            <div class="help-panel" id="helpPanelPrivacy">
+              <div class="glass-card">
+                <h3>How BYOK (Bring Your Own Key) Protects You</h3>
+                <p>WeatherMind uses a serverless client-side architecture. This design values your privacy and saves hosting costs.</p>
+                
+                <div class="privacy-features">
+                  <div class="privacy-feature-item">
+                    <span class="privacy-icon">🔒</span>
+                    <div>
+                      <h4>Direct Browser-to-AI Communication</h4>
+                      <p>Your API requests go directly from your web browser to Google or Groq servers. No middleman, database, or third-party server intercepts your messages.</p>
+                    </div>
+                  </div>
+                  <div class="privacy-feature-item">
+                    <span class="privacy-icon">💾</span>
+                    <div>
+                      <h4>Secure Local Storage</h4>
+                      <p>Your API keys are stored solely inside your browser's local sandbox (using <code>localStorage</code>). They are never sent to WeatherMind or any external server other than the respective AI endpoints.</p>
+                    </div>
+                  </div>
+                  <div class="privacy-feature-item">
+                    <span class="privacy-icon">🆓</span>
+                    <div>
+                      <h4>100% Free Hosting</h4>
+                      <p>Because the app doesn't require backend servers to pay for, we can keep this app open-source, fast, and completely free for anyone to use.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions Column (Right) -->
+          <div class="help-sidebar-col">
+            <div class="glass-card quick-actions-card">
+              <h3>Quick Actions</h3>
+              <p>Jump to settings or get key links quickly:</p>
+              
+              <div class="quick-action-buttons">
+                <button class="btn btn-primary btn-block" onclick="App.openSettings()" id="helpOpenSettingsBtn" style="margin-bottom: var(--space-sm)">
+                  ⚙️ Open Settings Modal
+                </button>
+                <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="btn btn-outline btn-block text-center" style="display: block; width: 100%; text-decoration: none; margin-bottom: var(--space-sm)">
+                  ✨ Get Google Gemini Key
+                </a>
+                <a href="https://console.groq.com/keys" target="_blank" rel="noopener" class="btn btn-outline btn-block text-center" style="display: block; width: 100%; text-decoration: none;">
+                  🦙 Get Groq API Key
+                </a>
+              </div>
+            </div>
+
+            <div class="glass-card help-faq-card">
+              <h3>Frequently Asked Questions</h3>
+              <div class="faq-list">
+                <div class="faq-item">
+                  <h4 class="faq-question">Is it completely free?</h4>
+                  <p class="faq-answer">Yes! Both Google AI Studio and Groq Console offer generous free tiers that cost $0. No credit card is required to sign up.</p>
+                </div>
+                <div class="faq-item">
+                  <h4 class="faq-question font-medium">What if I get "Invalid API Key"?</h4>
+                  <p class="faq-answer">Ensure you pasted the key into the correct tab: Gemini keys (starting with <code>AIzaSy</code>) go under Gemini; Groq keys (starting with <code>gsk_</code>) go under Groq.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ===== Settings Modal ===== -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-content glass-card">
+      <div class="modal-header">
+        <h3>⚙️ Settings</h3>
+        <button class="modal-close" id="settingsClose" aria-label="Close settings">✕</button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Provider Selector -->
+        <div class="settings-section">
+          <div class="settings-label">
+            <span>🧠 LLM Provider</span>
+          </div>
+          <p class="settings-desc">Choose your AI engine for the weather chat assistant.</p>
+          <div class="provider-tabs" id="providerTabs">
+            <button class="provider-tab active" data-provider="gemini" id="tabGemini">
+              <span class="provider-tab-icon">✨</span>
+              <span class="provider-tab-name">Gemini</span>
+              <span class="provider-tab-desc">Google • Proprietary</span>
+            </button>
+            <button class="provider-tab" data-provider="groq" id="tabGroq">
+              <span class="provider-tab-icon">🦙</span>
+              <span class="provider-tab-name">Groq</span>
+              <span class="provider-tab-desc">Open Source Models</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Gemini Settings Panel -->
+        <div class="provider-panel active" id="panelGemini">
+          <div class="settings-section">
+            <div class="settings-label">
+              <span>✨ Gemini AI Integration</span>
+              <span class="settings-badge" id="geminiStatus">Not configured</span>
+            </div>
+            <p class="settings-desc">
+              Google Gemini 2.0 Flash — fast and intelligent.
+              Free tier: 1,500 requests/day, no credit card needed.
+            </p>
+
+            <div class="api-key-input-group">
+              <input type="password" class="api-key-input" id="geminiKeyInput" placeholder="Paste your Gemini API key..." autocomplete="off" spellcheck="false">
+              <button class="key-toggle-btn" id="keyToggleBtn" title="Show/hide key" type="button">👁️</button>
+            </div>
+
+            <div class="settings-actions">
+              <button class="btn btn-primary" id="saveKeyBtn">Save & Test</button>
+              <button class="btn btn-outline" id="clearKeyBtn">Clear Key</button>
+            </div>
+
+            <div class="settings-status" id="settingsStatus"></div>
+
+            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="settings-link">
+              🔑 Get a free API key from Google AI Studio →
+            </a>
+          </div>
+        </div>
+
+        <!-- Groq Settings Panel -->
+        <div class="provider-panel" id="panelGroq">
+          <div class="settings-section">
+            <div class="settings-label">
+              <span>🦙 Groq — Open Source Models</span>
+              <span class="settings-badge" id="groqStatus">Not configured</span>
+            </div>
+            <p class="settings-desc">
+              Groq provides blazing-fast inference for open-source models.
+              Free tier: 14,400 requests/day. Choose your model below.
+            </p>
+
+            <!-- Model Selector -->
+            <div class="model-selector" id="groqModelSelector">
+              <label class="settings-sublabel">Select Model</label>
+              <div class="model-options">
+                <label class="model-option active">
+                  <input type="radio" name="groqModel" value="llama-3.3-70b-versatile" checked>
+                  <div class="model-option-content">
+                    <span class="model-badge">🦙</span>
+                    <div>
+                      <div class="model-name">Llama 3.3 70B</div>
+                      <div class="model-provider">Meta • Best quality</div>
+                    </div>
+                  </div>
+                </label>
+                <label class="model-option">
+                  <input type="radio" name="groqModel" value="mixtral-8x7b-32768">
+                  <div class="model-option-content">
+                    <span class="model-badge">🌀</span>
+                    <div>
+                      <div class="model-name">Mixtral 8x7B</div>
+                      <div class="model-provider">Mistral • Fast & capable</div>
+                    </div>
+                  </div>
+                </label>
+                <label class="model-option">
+                  <input type="radio" name="groqModel" value="gemma2-9b-it">
+                  <div class="model-option-content">
+                    <span class="model-badge">💎</span>
+                    <div>
+                      <div class="model-name">Gemma 2 9B</div>
+                      <div class="model-provider">Google • Lightweight</div>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div class="api-key-input-group" style="margin-top: var(--space-md)">
+              <input type="password" class="api-key-input" id="groqKeyInput" placeholder="Paste your Groq API key..." autocomplete="off" spellcheck="false">
+              <button class="key-toggle-btn" id="groqKeyToggleBtn" title="Show/hide key" type="button">👁️</button>
+            </div>
+
+            <div class="settings-actions">
+              <button class="btn btn-primary" id="saveGroqKeyBtn">Save & Test</button>
+              <button class="btn btn-outline" id="clearGroqKeyBtn">Clear Key</button>
+            </div>
+
+            <div class="settings-status" id="groqSettingsStatus"></div>
+
+            <a href="https://console.groq.com/keys" target="_blank" rel="noopener" class="settings-link">
+              🔑 Get a free API key from Groq Console →
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts (order matters) -->
+  <script src="js/storage.js?v=1.3"></script>
+  <script src="js/weather.js?v=1.2"></script>
+  <script src="js/agent.js?v=1.2"></script>
+  <script src="js/gemini.js?v=1.2"></script>
+  <script src="js/groq.js?v=1.0"></script>
+  <script src="js/charts.js?v=1.2"></script>
+  <script src="js/app.js?v=1.3"></script>
+
+</body>
+</html>
+

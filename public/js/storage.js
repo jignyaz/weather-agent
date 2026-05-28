@@ -1,0 +1,155 @@
+// ============================================
+// Storage Module — localStorage persistence
+// ============================================
+
+const Storage = {
+  KEYS: {
+    CITIES: 'agentic_weather_cities',
+    UNIT: 'agentic_weather_unit',
+    LAST_CITY: 'agentic_weather_last_city',
+    CHAT_HISTORY: 'agentic_weather_chat',
+    GEMINI_KEY: 'agentic_weather_gemini_key',
+    GROQ_KEY: 'agentic_weather_groq_key',
+    GROQ_MODEL: 'agentic_weather_groq_model',
+    LLM_PROVIDER: 'agentic_weather_llm_provider'
+  },
+
+  // ---------- LLM Provider ----------
+  getLLMProvider() {
+    return localStorage.getItem(this.KEYS.LLM_PROVIDER) || 'gemini';
+  },
+
+  setLLMProvider(provider) {
+    localStorage.setItem(this.KEYS.LLM_PROVIDER, provider);
+  },
+
+  // ---------- Gemini API Key ----------
+  getGeminiKey() {
+    return localStorage.getItem(this.KEYS.GEMINI_KEY) || '';
+  },
+
+  setGeminiKey(key) {
+    localStorage.setItem(this.KEYS.GEMINI_KEY, key.trim());
+  },
+
+  clearGeminiKey() {
+    localStorage.removeItem(this.KEYS.GEMINI_KEY);
+  },
+
+  // ---------- Groq API Key ----------
+  getGroqKey() {
+    return localStorage.getItem(this.KEYS.GROQ_KEY) || '';
+  },
+
+  setGroqKey(key) {
+    localStorage.setItem(this.KEYS.GROQ_KEY, key.trim());
+  },
+
+  clearGroqKey() {
+    localStorage.removeItem(this.KEYS.GROQ_KEY);
+  },
+
+  // ---------- Groq Model ----------
+  getGroqModel() {
+    return localStorage.getItem(this.KEYS.GROQ_MODEL) || 'llama-3.3-70b-versatile';
+  },
+
+  setGroqModel(model) {
+    localStorage.setItem(this.KEYS.GROQ_MODEL, model);
+  },
+
+  // ---------- Favorite Cities ----------
+  getCities() {
+    try {
+      const data = localStorage.getItem(this.KEYS.CITIES);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  saveCity(city) {
+    const cities = this.getCities();
+    // Avoid duplicates by lat/lon
+    const exists = cities.some(
+      c => Math.abs(c.latitude - city.latitude) < 0.01 &&
+           Math.abs(c.longitude - city.longitude) < 0.01
+    );
+    if (!exists) {
+      cities.push({
+        name: city.name,
+        country: city.country || '',
+        admin1: city.admin1 || '',
+        latitude: city.latitude,
+        longitude: city.longitude
+      });
+      localStorage.setItem(this.KEYS.CITIES, JSON.stringify(cities));
+    }
+    return !exists;
+  },
+
+  removeCity(latitude, longitude) {
+    let cities = this.getCities();
+    cities = cities.filter(
+      c => !(Math.abs(c.latitude - latitude) < 0.01 &&
+             Math.abs(c.longitude - longitude) < 0.01)
+    );
+    localStorage.setItem(this.KEYS.CITIES, JSON.stringify(cities));
+  },
+
+  // ---------- Temperature Unit ----------
+  getUnit() {
+    return localStorage.getItem(this.KEYS.UNIT) || 'celsius';
+  },
+
+  setUnit(unit) {
+    localStorage.setItem(this.KEYS.UNIT, unit);
+  },
+
+  toggleUnit() {
+    const current = this.getUnit();
+    const next = current === 'celsius' ? 'fahrenheit' : 'celsius';
+    this.setUnit(next);
+    return next;
+  },
+
+  // ---------- Last Searched City ----------
+  getLastCity() {
+    try {
+      const data = localStorage.getItem(this.KEYS.LAST_CITY);
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  setLastCity(city) {
+    localStorage.setItem(this.KEYS.LAST_CITY, JSON.stringify({
+      name: city.name,
+      country: city.country || '',
+      admin1: city.admin1 || '',
+      latitude: city.latitude,
+      longitude: city.longitude
+    }));
+  },
+
+  // ---------- Chat History ----------
+  getChatHistory() {
+    try {
+      const data = sessionStorage.getItem(this.KEYS.CHAT_HISTORY);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  addChatMessage(role, text) {
+    const history = this.getChatHistory();
+    history.push({ role, text, time: Date.now() });
+    sessionStorage.setItem(this.KEYS.CHAT_HISTORY, JSON.stringify(history));
+  },
+
+  clearChatHistory() {
+    sessionStorage.removeItem(this.KEYS.CHAT_HISTORY);
+  }
+};

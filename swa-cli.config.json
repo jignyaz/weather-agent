@@ -1,0 +1,11 @@
+{
+  "$schema": "https://aka.ms/swa/config-schema",
+  "configurations": {
+    "agentic-weatherapp": {
+      "appLocation": "public",
+      "outputLocation": "public",
+      "appName": "agentic-weatherapp",
+      "resourceGroup": "agentic-weatherapp-rg"
+    }
+  }
+}
